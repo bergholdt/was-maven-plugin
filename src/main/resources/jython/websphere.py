@@ -101,7 +101,7 @@ class WebSphere:
 
         try:
             if "" != cluster:
-                serverMapping = 'WebSphere:cluster=' + cluster
+                serverMapping = 'WebSphere:cluster=' + cluster + ',server=' + server
                 options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
             else:
                 serverMapping = 'WebSphere:server=' + server
