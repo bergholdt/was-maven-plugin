@@ -83,7 +83,7 @@ class WebSphere:
         if "" != cluster:
             appManager = AdminControl.queryNames('type=ApplicationManager,process=' + server + ',*')
         elif "" != node:
-            appManager = AdminControl.queryNames('node=' + node + ',type=Server,process=' + server + ',*')
+            appManager = AdminControl.queryNames('node=' + node + ',type=ApplicationManager,process=' + server + ',*')
         else:
             appManager = AdminControl.queryNames('type=Server,process=' + server + ',*')
         return appManager
