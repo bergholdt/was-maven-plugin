@@ -96,10 +96,17 @@ class WebSphere:
         print '-'*60
 
         options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
-
+	cell = AdminControl.getCell()
+	print 'Cell: ' + cell 
         try:
             if "" != cluster:
-                serverMapping = 'WebSphere:cluster=' + cluster + ',server=' + server
+                serverMapping = 'WebSphere:cell=' + cell + ',cluster=' + cluster
+                unmanagedNodeNames = AdminTask.listUnmanagedNodes().splitlines()
+                for unmanagedNodeName in unmanagedNodeNames:
+  			webservers = AdminTask.listServers('[-serverType WEB_SERVER -nodeName ' + unmanagedNodeName + ']').splitlines()
+  			for webserver in webservers:
+    				webserverName = AdminConfig.showAttribute(webserver, 'name')
+    				serverMapping = serverMapping + '+WebSphere:cell=' + cell + ',node=' + unmanagedNodeName + ',server=' + webserverName
                 options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
             else:
                 serverMapping = 'WebSphere:server=' + server
