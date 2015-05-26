@@ -17,6 +17,30 @@ webModuleParentLast = r"{{webModuleParentLast}}"
 packageFile = r"{{packageFile}}"
 restartAfterDeploy = r"{{restartAfterDeploy}}"
 
+class ServerMapping:
+    def __init__(self, server):
+        self.server = server
+
+    def build:
+        serverMapping = 'WebSphere:server=' + server
+        return serverMapping
+
+class ClusterServerMapping(ServerMapping):
+    def __init__(self, server, cluster):
+        super.__init(server)
+        self.cluster = cluster
+
+    def build:
+        cell = AdminControl.getCell()
+        serverMapping = 'WebSphere:cell=' + cell + ',cluster=' + self.cluster
+        unmanagedNodeNames = AdminTask.listUnmanagedNodes().splitlines()
+        for unmanagedNodeName in unmanagedNodeNames:
+            webservers = AdminTask.listServers('[-serverType WEB_SERVER -nodeName ' + unmanagedNodeName + ']').splitlines()
+            for webserver in webservers:
+                webserverName = AdminConfig.showAttribute(webserver, 'name')
+                serverMapping = serverMapping + '+WebSphere:cell=' + cell + ',node=' + unmanagedNodeName + ',server=' + webserverName
+        return serverMapping
+
 class WebSphere:
     def listApplications(self):
         print "[LIST APPLICATIONS]", host
@@ -98,17 +122,10 @@ class WebSphere:
         options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
         try:
             if "" != cluster:
-                cell = AdminControl.getCell()
-                serverMapping = 'WebSphere:cell=' + cell + ',cluster=' + cluster
-                unmanagedNodeNames = AdminTask.listUnmanagedNodes().splitlines()
-                for unmanagedNodeName in unmanagedNodeNames:
-                    webservers = AdminTask.listServers('[-serverType WEB_SERVER -nodeName ' + unmanagedNodeName + ']').splitlines()
-                    for webserver in webservers:
-                        webserverName = AdminConfig.showAttribute(webserver, 'name')
-                        serverMapping = serverMapping + '+WebSphere:cell=' + cell + ',node=' + unmanagedNodeName + ',server=' + webserverName
+                serverMapping = ClusterServerMapping(server, cluster).build()
                 options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
             else:
-                serverMapping = 'WebSphere:server=' + server
+                serverMapping = ServerMapping(server,cluster).build()
                 options += ['-MapModulesToServers', [['.*','.*', serverMapping]]]
 
             if "" != contextRoot:
