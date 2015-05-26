@@ -30,7 +30,7 @@ class WebSphere:
         print time.strftime("%Y-%b-%d %H:%M:%S %Z")
         print '-'*60
         try:
-            appManager = self.getAppManager()
+            appManager = self._getAppManager()
             if "" != cluster:
                 appManager = AdminControl.queryNames('name=' + cluster + ',type=Cluster,process=dmgr,*')
                 print AdminControl.invoke(appManager, 'rippleStart')
@@ -81,7 +81,7 @@ class WebSphere:
             traceback.print_exc(file=sys.stdout)
             print '-'*10
 
-    def getAppManager(self):
+    def _getAppManager(self):
         if "" != cluster:
             appManager = AdminControl.queryNames('type=ApplicationManager,process=' + server + ',*')
         elif "" != node:
@@ -90,33 +90,38 @@ class WebSphere:
             appManager = AdminControl.queryNames('type=Server,process=' + server + ',*')
         return appManager
 
+    def _getServerOptions(self):
+        options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
+
+        if "" != cluster:
+            serverMapping = ClusterServerMapping(server, cluster).build()
+            options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
+        else:
+            serverMapping = ServerMapping(server,cluster).build()
+            options += ['-MapModulesToServers', [['.*','.*', serverMapping]]]
+
+        if "" != contextRoot:
+            options += ['-contextroot', contextRoot]
+
+        if "" != virtualHost:
+            options += ['-MapWebModToVH', [['.*','.*', virtualHost]]]
+
+        if "" != sharedLibs:
+            libs = []
+            for lib in sharedLibs.split(','):
+                libs.append(['.*','.*', lib])
+            options += ['-MapSharedLibForMod', libs]
+
+        return options
+
     def installApplication(self):
         print '-'*60
         print "[INSTALLING APPLICATION]", host, applicationName
         print time.strftime("%Y-%b-%d %H:%M:%S %Z")
         print '-'*60
 
-        options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
+        options = self._getServerOptions()
         try:
-            if "" != cluster:
-                serverMapping = ClusterServerMapping(server, cluster).build()
-                options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
-            else:
-                serverMapping = ServerMapping(server,cluster).build()
-                options += ['-MapModulesToServers', [['.*','.*', serverMapping]]]
-
-            if "" != contextRoot:
-                options += ['-contextroot', contextRoot]
-
-            if "" != virtualHost:
-                options += ['-MapWebModToVH', [['.*','.*', virtualHost]]]
-
-            if "" != sharedLibs:
-                libs = []
-                for lib in sharedLibs.split(','):
-                    libs.append(['.*','.*', lib])
-                options += ['-MapSharedLibForMod', libs]
-
             print ""
             print "options: ", options
             print ""
