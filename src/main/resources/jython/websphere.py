@@ -86,28 +86,8 @@ class WebSphere:
         print time.strftime("%Y-%b-%d %H:%M:%S %Z")
         print '-'*60
 
-        options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
-
         try:
-            if "" != cluster:
-                serverMapping = 'WebSphere:cluster=' + cluster
-                options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
-            else:
-                serverMapping = 'WebSphere:server=' + server
-                options += ['-MapModulesToServers', [['.*','.*', serverMapping]]]
-
-            if "" != contextRoot:
-                options += ['-contextroot', contextRoot]
-
-            if "" != virtualHost:
-                options += ['-MapWebModToVH', [['.*','.*', virtualHost]]]
-
-            if "" != sharedLibs:
-                libs = []
-                for lib in sharedLibs.split(','):
-                    libs.append(['.*','.*', lib])
-                options += ['-MapSharedLibForMod', libs]
-
+            options = self._getServerOptions()
             print ""
             print "options: ", options
             print ""
@@ -197,6 +177,30 @@ class WebSphere:
         else:
             appManager = AdminControl.queryNames('type=Server,process=' + server + ',*')
         return appManager
+
+    def _getServerOptions(self):
+        options = ['-deployws', '-distributeApp', '-appname', applicationName, '-server', server]
+
+        if "" != cluster:
+            serverMapping = 'WebSphere:cluster=' + cluster
+            options += ['-cluster', cluster, '-MapModulesToServers', [['.*','.*', serverMapping]]]
+        else:
+            serverMapping = 'WebSphere:server=' + server
+            options += ['-MapModulesToServers', [['.*','.*', serverMapping]]]
+
+        if "" != contextRoot:
+            options += ['-contextroot', contextRoot]
+
+        if "" != virtualHost:
+            options += ['-MapWebModToVH', [['.*','.*', virtualHost]]]
+
+        if "" != sharedLibs:
+            libs = []
+            for lib in sharedLibs.split(','):
+                libs.append(['.*','.*', lib])
+            options += ['-MapSharedLibForMod', libs]
+
+        return options
 
 
 
